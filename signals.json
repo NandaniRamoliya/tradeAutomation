@@ -1,0 +1,208 @@
+[
+  {
+    "symbol": "MOTHERSON.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 100,
+    "entry_price": 168.0,
+    "stop_loss": 163.8,
+    "target_1": 176.4,
+    "target_2": 182.7,
+    "quantity": 23,
+    "capital_required": 3864.0,
+    "max_risk_rupees": 96.6,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Institutional Volume Surge (4.3x 20-day avg)",
+      "RSI in Prime Momentum Zone (63.1)",
+      "5-Day High Breakout",
+      "Strong Bullish Close near day's high"
+    ]
+  },
+  {
+    "symbol": "PNB.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 90,
+    "entry_price": 126.0999984741211,
+    "stop_loss": 122.95,
+    "target_1": 132.4,
+    "target_2": 137.12,
+    "quantity": 31,
+    "capital_required": 3909.1,
+    "max_risk_rupees": 97.65,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Above Average Volume (1.4x 20-day avg)",
+      "RSI in Prime Momentum Zone (64.9)",
+      "5-Day High Breakout",
+      "Strong Bullish Close near day's high"
+    ]
+  },
+  {
+    "symbol": "SBIN.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 85,
+    "entry_price": 1006.4000244140625,
+    "stop_loss": 981.24,
+    "target_1": 1056.72,
+    "target_2": 1094.46,
+    "quantity": 3,
+    "capital_required": 3019.2,
+    "max_risk_rupees": 75.48,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Institutional Volume Surge (2.3x 20-day avg)",
+      "RSI in Prime Momentum Zone (60.4)",
+      "Strong Bullish Close near day's high"
+    ]
+  },
+  {
+    "symbol": "TATASTEEL.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 80,
+    "entry_price": 182.0,
+    "stop_loss": 177.45,
+    "target_1": 191.1,
+    "target_2": 197.93,
+    "quantity": 21,
+    "capital_required": 3822.0,
+    "max_risk_rupees": 95.55,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Above Average Volume (1.3x 20-day avg)",
+      "RSI in Prime Momentum Zone (59.2)",
+      "5-Day High Breakout"
+    ]
+  },
+  {
+    "symbol": "CANBK.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 75,
+    "entry_price": 122.9000015258789,
+    "stop_loss": 119.83,
+    "target_1": 129.04,
+    "target_2": 133.65,
+    "quantity": 32,
+    "capital_required": 3932.8,
+    "max_risk_rupees": 98.24,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "Above Average Volume (1.4x 20-day avg)",
+      "RSI in Prime Momentum Zone (55.8)",
+      "5-Day High Breakout",
+      "Strong Bullish Close near day's high"
+    ]
+  },
+  {
+    "symbol": "IOC.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 70,
+    "entry_price": 144.5,
+    "stop_loss": 140.89,
+    "target_1": 151.72,
+    "target_2": 157.13,
+    "quantity": 27,
+    "capital_required": 3901.5,
+    "max_risk_rupees": 97.47,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Institutional Volume Surge (2.3x 20-day avg)",
+      "RSI Overheated (73.2)",
+      "5-Day High Breakout"
+    ]
+  },
+  {
+    "symbol": "NHPC.NS",
+    "action": "STRONG BUY",
+    "confidence_score": 70,
+    "entry_price": 80.5999984741211,
+    "stop_loss": 78.58,
+    "target_1": 84.64,
+    "target_2": 87.67,
+    "quantity": 49,
+    "capital_required": 3949.4,
+    "max_risk_rupees": 98.98,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Institutional Volume Surge (4.2x 20-day avg)",
+      "5-Day High Breakout"
+    ]
+  },
+  {
+    "symbol": "BEL.NS",
+    "action": "MODERATE BUY",
+    "confidence_score": 65,
+    "entry_price": 395.1000061035156,
+    "stop_loss": 385.22,
+    "target_1": 414.86,
+    "target_2": 429.68,
+    "quantity": 10,
+    "capital_required": 3951.0,
+    "max_risk_rupees": 98.8,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Above Average Volume (1.5x 20-day avg)",
+      "RSI in Prime Momentum Zone (61.7)"
+    ]
+  },
+  {
+    "symbol": "TATAPOWER.NS",
+    "action": "MODERATE BUY",
+    "confidence_score": 65,
+    "entry_price": 364.54998779296875,
+    "stop_loss": 355.44,
+    "target_1": 382.77,
+    "target_2": 396.43,
+    "quantity": 10,
+    "capital_required": 3645.5,
+    "max_risk_rupees": 91.1,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "RSI in Prime Momentum Zone (60.9)",
+      "5-Day High Breakout"
+    ]
+  },
+  {
+    "symbol": "IRFC.NS",
+    "action": "MODERATE BUY",
+    "confidence_score": 60,
+    "entry_price": 80.12999725341797,
+    "stop_loss": 78.13,
+    "target_1": 84.13,
+    "target_2": 87.13,
+    "quantity": 49,
+    "capital_required": 3926.37,
+    "max_risk_rupees": 98.0,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "RSI in Prime Momentum Zone (58.2)",
+      "5-Day High Breakout",
+      "Strong Bullish Close near day's high"
+    ]
+  },
+  {
+    "symbol": "POWERGRID.NS",
+    "action": "MODERATE BUY",
+    "confidence_score": 55,
+    "entry_price": 261.1499938964844,
+    "stop_loss": 254.62,
+    "target_1": 274.21,
+    "target_2": 284.0,
+    "quantity": 15,
+    "capital_required": 3917.25,
+    "max_risk_rupees": 97.95,
+    "reasons": [
+      "Above 50 & 200 EMA (Macro Bullish)",
+      "9 EMA > 21 EMA Bullish Crossover",
+      "Above Average Volume (1.4x 20-day avg)",
+      "RSI Bullish Baseline (54.7)"
+    ]
+  }
+]
