@@ -463,3 +463,4 @@ def _format_daily_gujarati(gold, silver, top_stocks, capital, ts):
     lines.append("💡 *શીલ્ડ નિયમ:* જો સ્ટોપ-લોસ હિટ થાય, તો તરત જ એક્ઝિટ કરો!")
     lines.append("🌐 ભાષા બદલવા માટે ગમે ત્યારે /language લખો")
     return "\n".join(lines)
+

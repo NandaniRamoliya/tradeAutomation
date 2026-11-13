@@ -1,6 +1,9 @@
+import sys
+import os
 import time
 import threading
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any, Optional
 import requests
 
@@ -13,6 +16,34 @@ import localization
 import user_preferences
 import daily_tracker
 
+LOG_FILE = Path(__file__).resolve().parent / "bot.log"
+
+# On Windows pythonw.exe, sys.stdout and sys.stderr are None.
+# If print() is called without a valid stdout handle, pythonw terminates.
+# We redirect stdout/stderr to bot.log with line buffering.
+try:
+    if sys.stdout is None or not hasattr(sys.stdout, "write"):
+        sys.stdout = open(LOG_FILE, "a", encoding="utf-8", buffering=1)
+    if sys.stderr is None or not hasattr(sys.stderr, "write"):
+        sys.stderr = open(LOG_FILE, "a", encoding="utf-8", buffering=1)
+except Exception:
+    pass
+
+
+def log_event(msg: str):
+    """Writes timestamped entry to bot.log and stdout."""
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    formatted = f"[{ts}] {msg}"
+    try:
+        print(formatted, flush=True)
+    except Exception:
+        pass
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(formatted + "\n")
+    except Exception:
+        pass
+
 
 def send_telegram_message(
     token: str,
@@ -21,7 +52,7 @@ def send_telegram_message(
     reply_markup: Optional[Dict[str, Any]] = None,
     parse_mode: str = "Markdown"
 ) -> bool:
-    """Dispatches a message to Telegram with optional inline keyboard."""
+    """Dispatches a message to Telegram with optional inline keyboard and markdown fallback."""
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
@@ -31,10 +62,20 @@ def send_telegram_message(
     if reply_markup:
         payload["reply_markup"] = reply_markup
     try:
-        resp = requests.post(url, json=payload, timeout=10)
-        return resp.status_code == 200
+        resp = requests.post(url, json=payload, timeout=12)
+        if resp.status_code == 200:
+            return True
+        log_event(f"sendMessage failed (code {resp.status_code}): {resp.text}")
+        # If Markdown entity parse error, retry with clean plain text
+        if "parse" in resp.text.lower() or "bad request" in resp.text.lower():
+            clean_text = text.replace("*", "").replace("`", "").replace("_", "")
+            payload["text"] = clean_text
+            payload.pop("parse_mode", None)
+            retry_resp = requests.post(url, json=payload, timeout=12)
+            return retry_resp.status_code == 200
+        return False
     except Exception as e:
-        print(f"Error sending message to {chat_id}: {e}")
+        log_event(f"Error sending message to {chat_id}: {e}")
         return False
 
 
@@ -78,9 +119,9 @@ def format_interactive_stock_analysis(query: str, capital_inr: float = 5000.0, l
 
     if df is None or len(df) < 30:
         if lang == "hi":
-            return f"❌ *{display_title}* (`{sym}`) का चार्ट डेटा लोड नहीं हो सका। यह शेयर नया हो सकता है।"
+            return f"❌ *{display_title}* (`{sym}`) का चार्ट डेटा लोड नहीं हो सका। यह शेयर नया या कम लिक्विडिटी वाला हो सकता है।"
         elif lang == "gu":
-            return f"❌ *{display_title}* (`{sym}`) નો ચાર્ટ ડેટા લોડ થઈ શક્યો નથી. આ શેર નવો હોઈ શકે છે."
+            return f"❌ *{display_title}* (`{sym}`) નો ચાર્ટ ડેટા લોડ થઈ શક્યો નથી. આ શેર નવો અથવા ઓછી લિક્વિડિટી વાળો હોઈ શકે છે."
         else:
             return f"❌ Could not load price chart for *{display_title}* (`{sym}`). It may be newly listed or illiquid."
 
@@ -121,14 +162,13 @@ def background_daily_scheduler():
       - 04:00 PM (Monday - Friday)
     Skips weekends (Saturday & Sunday).
     """
-    print("⏰ Autonomous TradeShield Schedule Monitor started (9:00 AM & 4:00 PM Weekdays)...")
+    log_event("Autonomous TradeShield Schedule Monitor started (9:00 AM & 4:00 PM Weekdays)")
     last_triggered_slot = ""
 
     while True:
         try:
             now = datetime.now()
-            # 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
-            weekday = now.weekday()
+            weekday = now.weekday()  # 0=Monday, 4=Friday
             current_date_str = now.strftime("%Y-%m-%d")
             hour = now.hour
             minute = now.minute
@@ -138,22 +178,22 @@ def background_daily_scheduler():
                 if hour == 9 and 0 <= minute <= 5:
                     slot_key = f"{current_date_str}_0900"
                     if slot_key != last_triggered_slot:
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔔 Triggering 9:00 AM Morning Market Scan & Dispatch...")
+                        log_event("Triggering 9:00 AM Morning Market Scan & Dispatch...")
                         last_triggered_slot = slot_key
                         daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 9:00 AM Morning Market Update successfully dispatched!")
+                        log_event("9:00 AM Morning Market Update successfully dispatched!")
 
                 # Evening Slot (16:00 / 4:00 PM - 16:05 window)
                 elif hour == 16 and 0 <= minute <= 5:
                     slot_key = f"{current_date_str}_1600"
                     if slot_key != last_triggered_slot:
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔔 Triggering 4:00 PM Market Close Scan & Dispatch...")
+                        log_event("Triggering 4:00 PM Market Close Scan & Dispatch...")
                         last_triggered_slot = slot_key
                         daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 4:00 PM Market Update successfully dispatched!")
+                        log_event("4:00 PM Market Update successfully dispatched!")
 
         except Exception as e:
-            print(f"Schedule monitor error: {e}")
+            log_event(f"Schedule monitor error: {e}")
 
         time.sleep(30)
 
@@ -165,15 +205,15 @@ def run_telegram_bot_listener():
     """
     token = config.TELEGRAM_BOT_TOKEN
     if not token:
-        print("❌ Telegram bot token not configured in .env!")
+        log_event("ERROR: Telegram bot token not configured in .env!")
         return
 
     # Start background scheduler thread for 9 AM & 4 PM weekday updates
     sched_thread = threading.Thread(target=background_daily_scheduler, daemon=True)
     sched_thread.start()
 
-    print("🤖 TradeShield Multilingual Telegram Listener is RUNNING...")
-    print("Supports: English (en), Hindi (hi), Gujarati (gu)")
+    log_event("TradeShield Multilingual Telegram Listener is RUNNING...")
+    log_event("Languages supported: English (en), Hindi (hi), Gujarati (gu)")
     offset = 0
 
     while True:
@@ -181,12 +221,12 @@ def run_telegram_bot_listener():
             url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&timeout=15"
             resp = requests.get(url, timeout=20)
             if resp.status_code != 200:
-                time.sleep(3)
+                time.sleep(2)
                 continue
 
             data = resp.json()
             if not data.get("ok"):
-                time.sleep(3)
+                time.sleep(2)
                 continue
 
             for update in data.get("result", []):
@@ -195,10 +235,12 @@ def run_telegram_bot_listener():
                 # 1. Handle Inline Button Clicks (Language Selection)
                 callback_query = update.get("callback_query")
                 if callback_query:
-                    cb_id = callback_query["id"]
+                    cb_id = callback_query.get("id")
                     from_user = callback_query.get("from", {})
                     chat_id = from_user.get("id")
                     cb_data = callback_query.get("data", "")
+
+                    log_event(f"Button Click from {from_user.get('first_name')} ({chat_id}): '{cb_data}'")
 
                     if cb_data.startswith("set_lang_"):
                         chosen_lang = cb_data.replace("set_lang_", "").strip().lower()
@@ -231,7 +273,7 @@ def run_telegram_bot_listener():
                 }
                 curr_lang = user_preferences.get_user_language(chat_id)
 
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] Query from {sender_name} ({chat_id}) [Lang: {curr_lang}]: '{user_text}'")
+                log_event(f"Query from {sender_name} ({chat_id}) [Lang: {curr_lang}]: '{user_text}'")
 
                 # Command: Language change prompt
                 if user_text.lower() in ["/language", "/lang", "language", "lang", "भाषा", "ભાષા"]:
@@ -256,15 +298,19 @@ def run_telegram_bot_listener():
 
                 # Command: Start / Help / Greeting
                 if user_text.startswith("/start") or user_text.lower() in ["hi", "hello", "help", "/help", "kem cho"]:
-                    # Show welcome message in current language and include language picker buttons
                     welcome_text = localization.get_welcome_message(sender_name=sender_name, lang=curr_lang)
                     kbd = localization.get_language_inline_keyboard()
                     send_telegram_message(token, chat_id, welcome_text, reply_markup=kbd)
                     continue
 
-                # Command: Trigger instant market predictions test
+                # Command: Trigger instant market predictions scan
                 if user_text.lower() in ["/scan", "/today", "/update", "update"]:
-                    send_telegram_message(token, chat_id, "🔍 Scanning live market for today's best setups...")
+                    status_text = "🔍 Scanning live market for today's best setups..."
+                    if curr_lang == "hi":
+                        status_text = "🔍 आज के सर्वोत्तम ट्रेड्स के लिए मार्केट स्कैन किया जा रहा है..."
+                    elif curr_lang == "gu":
+                        status_text = "🔍 આજના શ્રેષ્ઠ સેટઅપ્સ માટે માર્કેટ સ્કેન થઈ રહ્યું છે..."
+                    send_telegram_message(token, chat_id, status_text)
                     daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
                     continue
 
@@ -279,11 +325,12 @@ def run_telegram_bot_listener():
                 )
                 send_telegram_message(token, chat_id, analysis_card)
 
-        except requests.exceptions.RequestException:
-            time.sleep(5)
-        except Exception as e:
-            print(f"Listener loop error: {e}")
+        except requests.exceptions.RequestException as re:
+            log_event(f"Network error in listener: {re}")
             time.sleep(3)
+        except Exception as e:
+            log_event(f"Listener error: {e}")
+            time.sleep(2)
 
 
 if __name__ == "__main__":

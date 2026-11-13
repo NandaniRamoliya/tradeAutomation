@@ -85,3 +85,4 @@ def get_all_subscribers() -> List[str]:
     if default_chat:
         subscribers.add(default_chat)
     return list(subscribers)
+
