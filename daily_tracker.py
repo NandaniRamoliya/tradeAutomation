@@ -8,6 +8,8 @@ from data_fetcher import fetch_stock_data, load_stock_universe
 from scanner import analyze_stock_signal
 from shield import TradeShield
 from bot import send_telegram_alert
+import localization
+import user_preferences
 
 BASE_DIR = Path(__file__).resolve().parent
 PREDICTIONS_TXT = BASE_DIR / "DAILY_PREDICTIONS.txt"
@@ -220,36 +222,23 @@ def generate_daily_prediction_report(capital_inr: float = 5000.0) -> str:
         message=f"Today's scan complete. Top picks: {top_stock_str}. Check DAILY_PREDICTIONS.txt"
     )
 
-    # Trigger Telegram Alert if configured
-    if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
-        tg_summary_lines = [
-            "🛡️ *TRADESHIELD: TODAY'S GROWW PICKS*",
-            f"💰 Wallet: ₹{capital_inr:,.0f} | 📅 {today_str}",
-            "--------------------------------------",
-            "🪙 *SAFE ASSETS (GOLD & SILVER DIP)*"
-        ]
-        for m in [gold_data, silver_data]:
-            if m:
-                tg_summary_lines.append(f"• *{m['name']}*: ₹{m['current_price']:.2f} ({m['day_change_pct']:+0.2f}%)")
-                tg_summary_lines.append(f"  👉 Buy {m['recommended_units']} units (Cost: ₹{m['total_cost']:,.0f}) | Target: ₹{m['target_1']:.2f}")
+    # Trigger Multilingual Telegram Alerts to all active users
+    if config.TELEGRAM_BOT_TOKEN:
+        subscribers = user_preferences.get_all_subscribers()
+        if not subscribers and config.TELEGRAM_CHAT_ID:
+            subscribers = [str(config.TELEGRAM_CHAT_ID)]
 
-        tg_summary_lines.append("--------------------------------------")
-        tg_summary_lines.append("🚀 *TOP LOW-VALUE STOCKS (1-2 DAY)*")
-        if not top_stocks:
-            tg_summary_lines.append("⚠️ Shield says: No safe setups today. Keep cash safe!")
-        else:
-            for s in top_stocks:
-                sym = s["symbol"].replace(".NS", "")
-                sh = s["shield"]
-                tg_summary_lines.append(f"📈 *{sym}* (Confidence: {s['confidence_score']}%)")
-                tg_summary_lines.append(f"   • Buy Price: ₹{s['entry_price']:.2f}")
-                tg_summary_lines.append(f"   • Qty: *{sh['recommended_quantity']} shares* (Cost: ₹{sh['total_investment']:,.0f})")
-                tg_summary_lines.append(f"   • 🛡️ *Stop-Loss*: ₹{sh['stop_loss_price']:.2f} (Max loss: ₹{sh['max_possible_loss']:.1f})")
-                tg_summary_lines.append(f"   • 🎯 *Target 1*: ₹{sh['target_1_price']:.2f} (+{sh['target_1_percent']}%) ➔ Profit: +₹{sh['target_1_profit']:,.0f}")
-
-        tg_summary_lines.append("--------------------------------------")
-        tg_summary_lines.append("💡 *Shield Rule:* If Stop-Loss hits, exit immediately. Never hold and hope!")
-        send_telegram_alert("\n".join(tg_summary_lines))
+        for sub_id in subscribers:
+            user_lang = user_preferences.get_user_language(sub_id)
+            tg_message = localization.format_daily_prediction_card(
+                gold_data=gold_data,
+                silver_data=silver_data,
+                top_stocks=top_stocks,
+                capital_inr=capital_inr,
+                lang=user_lang,
+                timestamp_str=today_str
+            )
+            send_telegram_alert(tg_message, chat_id=sub_id)
 
     return report_text
 

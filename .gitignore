@@ -1,6 +1,10 @@
 # Environment & Secrets
 .env
+user_preferences.json
+task_output.log
 *.env
+user_preferences.json
+task_output.log
 .venv/
 __pycache__/
 *.pyc
@@ -20,6 +24,8 @@ __pycache__/
 *.userosscache
 *.sln.docstates
 *.env
+user_preferences.json
+task_output.log
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

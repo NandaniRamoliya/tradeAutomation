@@ -1,34 +1,74 @@
 import time
+import threading
+from datetime import datetime
+from typing import Dict, Any, Optional
 import requests
+
 import config
 from data_fetcher import fetch_stock_data
 from scanner import analyze_stock_signal
 from shield import TradeShield
 from symbol_resolver import resolve_stock_symbol
+import localization
+import user_preferences
+import daily_tracker
 
 
-def format_interactive_stock_analysis(query: str, capital_inr: float = 5000.0) -> str:
+def send_telegram_message(
+    token: str,
+    chat_id: Any,
+    text: str,
+    reply_markup: Optional[Dict[str, Any]] = None,
+    parse_mode: str = "Markdown"
+) -> bool:
+    """Dispatches a message to Telegram with optional inline keyboard."""
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload: Dict[str, Any] = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": parse_mode
+    }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        return resp.status_code == 200
+    except Exception as e:
+        print(f"Error sending message to {chat_id}: {e}")
+        return False
+
+
+def answer_callback_query(token: str, callback_query_id: str, text: Optional[str] = None):
+    """Answers Telegram callback queries so buttons stop spinning."""
+    url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+    payload = {"callback_query_id": callback_query_id}
+    if text:
+        payload["text"] = text
+    try:
+        requests.post(url, json=payload, timeout=5)
+    except Exception:
+        pass
+
+
+def format_interactive_stock_analysis(query: str, capital_inr: float = 5000.0, lang: str = "en") -> str:
     """
     Resolves any user input (full company name, typo, or ticker) to NSE symbol,
-    and generates a complete analysis for:
-    1. Wants to invest now (New Buy)
-    2. Already invested / holding this stock
+    and returns a localized analysis card in the user's chosen language (en, hi, or gu).
     """
     raw_query = query.replace("/CHECK", "").replace("/check", "").strip()
     if not raw_query:
-        return "❌ Please type a stock or company name (e.g. `Tata Motors`, `Omnitech`, `SBIN`)."
+        if lang == "hi":
+            return "❌ कृपया किसी शेयर या कंपनी का नाम लिखें (जैसे `Tata Motors`, `SBIN`, `GOLDBEES`)।"
+        elif lang == "gu":
+            return "❌ કૃપા કરીને કોઈપણ શેર અથવા કંપનીનું નામ લખો (જેમ કે `Tata Motors`, `SBIN`, `GOLDBEES`)."
+        else:
+            return "❌ Please type a stock or company name (e.g. `Tata Motors`, `SBIN`, `GOLDBEES`)."
 
     # Smart Name / Symbol Resolver
     sym, company_name = resolve_stock_symbol(raw_query)
 
     if not sym:
-        return (
-            f"❌ *Could not find a stock matching '{raw_query}' on NSE/BSE.*\n\n"
-            f"👉 *Tips:*\n"
-            f"• You can type company names: `Tata Motors`, `Omnitech`, `State Bank`, `Reliance`\n"
-            f"• Or exact tickers: `TATASTEEL`, `SBIN`, `IRFC`, `GOLDBEES`\n"
-            f"• Please check spelling and try again!"
-        )
+        return localization.format_symbol_not_found(raw_query, lang=lang)
 
     clean_sym = sym.replace(".NS", "").replace(".BO", "")
     display_title = company_name if company_name else clean_sym
@@ -37,86 +77,103 @@ def format_interactive_stock_analysis(query: str, capital_inr: float = 5000.0) -
     df = fetch_stock_data(sym, period="6mo")
 
     if df is None or len(df) < 30:
-        return f"❌ Could not load price chart for *{display_title}* (`{sym}`). It may be illiquid or newly listed."
+        if lang == "hi":
+            return f"❌ *{display_title}* (`{sym}`) का चार्ट डेटा लोड नहीं हो सका। यह शेयर नया हो सकता है।"
+        elif lang == "gu":
+            return f"❌ *{display_title}* (`{sym}`) નો ચાર્ટ ડેટા લોડ થઈ શક્યો નથી. આ શેર નવો હોઈ શકે છે."
+        else:
+            return f"❌ Could not load price chart for *{display_title}* (`{sym}`). It may be newly listed or illiquid."
 
     signal = analyze_stock_signal(sym, df, shield)
     if not signal:
-        return f"❌ Insufficient historical data to evaluate *{display_title}* safely."
+        if lang == "hi":
+            return f"❌ *{display_title}* का सुरक्षित मूल्यांकन करने के लिए पर्याप्त तकनीकी डेटा नहीं मिला।"
+        elif lang == "gu":
+            return f"❌ *{display_title}* નું સુરક્ષિત મૂલ્યાંકન કરવા માટે પૂરતો ડેટા મળ્યો નથી."
+        else:
+            return f"❌ Insufficient historical data to evaluate *{display_title}* safely."
 
     sh = signal["shield"]
     price = signal["entry_price"]
     score = signal["confidence_score"]
-    action = signal["action"]
     rsi = signal["rsi"]
     vol = signal["volume_surge"]
-    sl = sh["stop_loss_price"]
-    sl_pct = sh["sl_percent"]
-    t1 = sh["target_1_price"]
-    t1_pct = sh["target_1_percent"]
-    t2 = sh["target_2_price"]
-    t2_pct = sh["target_2_percent"]
-    qty = sh["recommended_quantity"]
+    reasons = signal.get("reasons", [])
 
-    reasons_text = "\n".join([f"  • {r}" for r in signal["reasons"][:3]])
-
-    if sh["is_approved"]:
-        status_header = f"🟢 *{display_title}* (`{clean_sym}`) — HIGH MOMENTUM ({score}% Score)"
-        new_buyer_advice = (
-            f"✅ *Safe to Enter in Groww (Delivery)*\n"
-            f"• Recommended Buy Price: Around *₹{price:.2f}*\n"
-            f"• Recommended Quantity: *{qty} shares* (Cost: ₹{sh['total_investment']:,.0f})\n"
-            f"• 🛡️ *Shield Stop-Loss:* ₹{sl:.2f} (-{sl_pct}% | Max risk ₹{sh['max_possible_loss']:.1f})\n"
-            f"• 🎯 *Target 1:* ₹{t1:.2f} (+{t1_pct}%) ➔ Profit: +₹{sh['target_1_profit']:,.0f}\n"
-            f"• 🚀 *Target 2:* ₹{t2:.2f} (+{t2_pct}%) ➔ Profit: +₹{sh['target_2_profit']:,.0f}"
-        )
-        holding_advice = (
-            f"📈 *Good Trend — Safe to HOLD*\n"
-            f"• If you bought lower, the trend is strong. Let it run towards *₹{t1:.2f}*.\n"
-            f"• *Action:* Move your stop-loss up to *₹{sl:.2f}* so you lock in your profit!"
-        )
-    else:
-        status_header = f"⚠️ *{display_title}* (`{clean_sym}`) — CAUTION / NOT APPROVED"
-        rejection_notes = "\n".join([f"  ⚠️ {r}" for r in sh["rejection_reasons"][:2]])
-        new_buyer_advice = (
-            f"🚫 *DO NOT BUY NOW (High Risk)*\n"
-            f"{rejection_notes}\n"
-            f"• *Advice:* Wait for a better pullback or volume breakout before entering."
-        )
-        holding_advice = (
-            f"🛡️ *If you are already holding:*\n"
-            f"• Stock is showing technical weakness or downtrend.\n"
-            f"• If it drops below *₹{sl:.2f}*, cut losses or exit to protect your cash.\n"
-            f"• Do NOT average down a falling stock."
-        )
-
-    msg = (
-        f"{status_header}\n"
-        f"💵 *Current Price:* ₹{price:.2f} (RSI: {rsi:.1f} | Vol: {vol:.1f}x)\n"
-        f"--------------------------------------\n"
-        f"👉 *CASE 1: IF YOU WANT TO BUY NOW*\n"
-        f"{new_buyer_advice}\n"
-        f"--------------------------------------\n"
-        f"👉 *CASE 2: IF YOU ALREADY OWN IT*\n"
-        f"{holding_advice}\n"
-        f"--------------------------------------\n"
-        f"📊 *Key Signals:*\n{reasons_text}\n\n"
-        f"💡 *Remember:* Always trade in Cash Delivery. Keep your stop-loss strict!"
+    return localization.format_stock_analysis_card(
+        display_title=display_title,
+        clean_sym=clean_sym,
+        price=price,
+        score=score,
+        rsi=rsi,
+        vol=vol,
+        sh=sh,
+        reasons=reasons,
+        lang=lang
     )
-    return msg
+
+
+def background_daily_scheduler():
+    """
+    Autonomous background thread that checks time every 30 seconds.
+    Triggers market predictions report at:
+      - 09:00 AM (Monday - Friday)
+      - 04:00 PM (Monday - Friday)
+    Skips weekends (Saturday & Sunday).
+    """
+    print("⏰ Autonomous TradeShield Schedule Monitor started (9:00 AM & 4:00 PM Weekdays)...")
+    last_triggered_slot = ""
+
+    while True:
+        try:
+            now = datetime.now()
+            # 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
+            weekday = now.weekday()
+            current_date_str = now.strftime("%Y-%m-%d")
+            hour = now.hour
+            minute = now.minute
+
+            if weekday < 5:  # Monday to Friday only
+                # Morning Slot (9:00 AM - 9:05 AM window)
+                if hour == 9 and 0 <= minute <= 5:
+                    slot_key = f"{current_date_str}_0900"
+                    if slot_key != last_triggered_slot:
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔔 Triggering 9:00 AM Morning Market Scan & Dispatch...")
+                        last_triggered_slot = slot_key
+                        daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 9:00 AM Morning Market Update successfully dispatched!")
+
+                # Evening Slot (16:00 / 4:00 PM - 16:05 window)
+                elif hour == 16 and 0 <= minute <= 5:
+                    slot_key = f"{current_date_str}_1600"
+                    if slot_key != last_triggered_slot:
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔔 Triggering 4:00 PM Market Close Scan & Dispatch...")
+                        last_triggered_slot = slot_key
+                        daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
+                        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 4:00 PM Market Update successfully dispatched!")
+
+        except Exception as e:
+            print(f"Schedule monitor error: {e}")
+
+        time.sleep(30)
 
 
 def run_telegram_bot_listener():
     """
-    Listens for incoming messages from users on Telegram.
-    When a user types a stock symbol, the bot instantly replies!
+    Main loop listening for messages and inline button clicks on Telegram.
+    Provides instant multilingual stock analysis and language configuration.
     """
     token = config.TELEGRAM_BOT_TOKEN
     if not token:
-        print("Telegram bot token not configured in .env!")
+        print("❌ Telegram bot token not configured in .env!")
         return
 
-    print("🤖 TradeShield Telegram Interactive Listener is RUNNING...")
-    print("Users can now send any stock name (e.g. TATASTEEL, SBIN) to the bot!")
+    # Start background scheduler thread for 9 AM & 4 PM weekday updates
+    sched_thread = threading.Thread(target=background_daily_scheduler, daemon=True)
+    sched_thread.start()
+
+    print("🤖 TradeShield Multilingual Telegram Listener is RUNNING...")
+    print("Supports: English (en), Hindi (hi), Gujarati (gu)")
     offset = 0
 
     while True:
@@ -134,59 +191,100 @@ def run_telegram_bot_listener():
 
             for update in data.get("result", []):
                 offset = update["update_id"] + 1
+
+                # 1. Handle Inline Button Clicks (Language Selection)
+                callback_query = update.get("callback_query")
+                if callback_query:
+                    cb_id = callback_query["id"]
+                    from_user = callback_query.get("from", {})
+                    chat_id = from_user.get("id")
+                    cb_data = callback_query.get("data", "")
+
+                    if cb_data.startswith("set_lang_"):
+                        chosen_lang = cb_data.replace("set_lang_", "").strip().lower()
+                        user_info = {
+                            "first_name": from_user.get("first_name", ""),
+                            "last_name": from_user.get("last_name", ""),
+                            "username": from_user.get("username", "")
+                        }
+                        user_preferences.set_user_language(chat_id, chosen_lang, user_info)
+                        answer_callback_query(token, cb_id, text="Language Updated!")
+                        confirm_text = localization.get_language_set_confirmation(chosen_lang)
+                        send_telegram_message(token, chat_id, confirm_text)
+                        continue
+
+                # 2. Handle Text Messages
                 msg = update.get("message")
                 if not msg or "text" not in msg:
                     continue
 
                 chat_id = msg["chat"]["id"]
                 user_text = msg["text"].strip()
-                sender_name = msg.get("from", {}).get("first_name", "Trader")
+                from_user = msg.get("from", {})
+                sender_name = from_user.get("first_name", "Trader")
 
-                print(f"Received query from {sender_name} ({chat_id}): '{user_text}'")
+                # Register / update user metadata
+                user_info = {
+                    "first_name": from_user.get("first_name", ""),
+                    "last_name": from_user.get("last_name", ""),
+                    "username": from_user.get("username", "")
+                }
+                curr_lang = user_preferences.get_user_language(chat_id)
 
-                if user_text.startswith("/start") or user_text.lower() in ["hi", "hello", "help", "/help"]:
-                    welcome_reply = (
-                        f"👋 Hello {sender_name}!\n\n"
-                        f"I am your *TradeShield Assistant* 🛡️\n\n"
-                        f"Just send me **any NSE stock name**, and I will instantly tell you:\n"
-                        f"1. Whether it is safe to **BUY NOW**\n"
-                        f"2. What to do if you **ALREADY OWN IT** (Hold/Sell targets)\n\n"
-                        f"👉 Try typing any of these now:\n"
-                        f"• `TATASTEEL`\n"
-                        f"• `SBIN`\n"
-                        f"• `IRFC`\n"
-                        f"• `PNB`\n"
-                        f"• `GOLDBEES`\n"
-                        f"• `INFY`"
-                    )
-                    send_reply(token, chat_id, welcome_reply)
-                else:
-                    # Treat the text as a stock query
-                    send_reply(token, chat_id, f"🔍 Analyzing *{user_text.upper()}* with The Shield... Please wait 3 seconds.")
-                    reply = format_interactive_stock_analysis(user_text)
-                    send_reply(token, chat_id, reply)
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Query from {sender_name} ({chat_id}) [Lang: {curr_lang}]: '{user_text}'")
+
+                # Command: Language change prompt
+                if user_text.lower() in ["/language", "/lang", "language", "lang", "भाषा", "ભાષા"]:
+                    prompt_text = localization.get_language_prompt_text()
+                    kbd = localization.get_language_inline_keyboard()
+                    send_telegram_message(token, chat_id, prompt_text, reply_markup=kbd)
+                    continue
+
+                # Quick Direct Commands for Language Switching
+                if user_text.lower() in ["/english", "/en"]:
+                    user_preferences.set_user_language(chat_id, "en", user_info)
+                    send_telegram_message(token, chat_id, localization.get_language_set_confirmation("en"))
+                    continue
+                if user_text.lower() in ["/hindi", "/hi"]:
+                    user_preferences.set_user_language(chat_id, "hi", user_info)
+                    send_telegram_message(token, chat_id, localization.get_language_set_confirmation("hi"))
+                    continue
+                if user_text.lower() in ["/gujarati", "/gu"]:
+                    user_preferences.set_user_language(chat_id, "gu", user_info)
+                    send_telegram_message(token, chat_id, localization.get_language_set_confirmation("gu"))
+                    continue
+
+                # Command: Start / Help / Greeting
+                if user_text.startswith("/start") or user_text.lower() in ["hi", "hello", "help", "/help", "kem cho"]:
+                    # Show welcome message in current language and include language picker buttons
+                    welcome_text = localization.get_welcome_message(sender_name=sender_name, lang=curr_lang)
+                    kbd = localization.get_language_inline_keyboard()
+                    send_telegram_message(token, chat_id, welcome_text, reply_markup=kbd)
+                    continue
+
+                # Command: Trigger instant market predictions test
+                if user_text.lower() in ["/scan", "/today", "/update", "update"]:
+                    send_telegram_message(token, chat_id, "🔍 Scanning live market for today's best setups...")
+                    daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
+                    continue
+
+                # Normal Stock Analysis Query
+                analyzing_msg = localization.get_analyzing_message(user_text, lang=curr_lang)
+                send_telegram_message(token, chat_id, analyzing_msg)
+
+                analysis_card = format_interactive_stock_analysis(
+                    query=user_text,
+                    capital_inr=config.DEFAULT_CAPITAL_INR,
+                    lang=curr_lang
+                )
+                send_telegram_message(token, chat_id, analysis_card)
 
         except requests.exceptions.RequestException:
             time.sleep(5)
         except Exception as e:
-            print(f"Listener error: {e}")
+            print(f"Listener loop error: {e}")
             time.sleep(3)
-
-
-def send_reply(token: str, chat_id: int, text: str):
-    """Sends a message back to Telegram."""
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown"
-    }
-    try:
-        requests.post(url, json=payload, timeout=8)
-    except Exception as e:
-        print(f"Send reply error: {e}")
 
 
 if __name__ == "__main__":
     run_telegram_bot_listener()
-

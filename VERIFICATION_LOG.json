@@ -286,5 +286,75 @@
         "status": "PENDING_VERIFICATION"
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-13 09:34 AM",
+    "capital_inr": 5000.0,
+    "gold": {
+      "symbol": "GOLDBEES",
+      "name": "Gold BeES (Pure Gold)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-13",
+      "current_price": 112.33000183105469,
+      "day_change_pct": -2.58,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -2.58% to \u20b9112.33. This is a healthy discount. Buy 13 units for your 1st step.",
+      "recommended_units": 13,
+      "total_cost": 1460.29,
+      "target_1": 116.82,
+      "target_2": 121.32,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "silver": {
+      "symbol": "SILVERBEES",
+      "name": "Silver BeES (Pure Silver)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-13",
+      "current_price": 169.92999267578125,
+      "day_change_pct": -3.91,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -3.91% to \u20b9169.93. This is a healthy discount. Buy 8 units for your 1st step.",
+      "recommended_units": 8,
+      "total_cost": 1359.44,
+      "target_1": 176.73,
+      "target_2": 183.52,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "top_stocks": []
+  },
+  {
+    "timestamp": "2026-11-13 09:39 AM",
+    "capital_inr": 5000.0,
+    "gold": {
+      "symbol": "GOLDBEES",
+      "name": "Gold BeES (Pure Gold)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-13",
+      "current_price": 112.27999877929688,
+      "day_change_pct": -2.63,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -2.63% to \u20b9112.28. This is a healthy discount. Buy 13 units for your 1st step.",
+      "recommended_units": 13,
+      "total_cost": 1459.64,
+      "target_1": 116.77,
+      "target_2": 121.26,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "silver": {
+      "symbol": "SILVERBEES",
+      "name": "Silver BeES (Pure Silver)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-13",
+      "current_price": 169.77999877929688,
+      "day_change_pct": -3.99,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -3.99% to \u20b9169.78. This is a healthy discount. Buy 8 units for your 1st step.",
+      "recommended_units": 8,
+      "total_cost": 1358.24,
+      "target_1": 176.57,
+      "target_2": 183.36,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "top_stocks": []
   }
 ]
