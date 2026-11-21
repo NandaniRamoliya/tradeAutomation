@@ -29,11 +29,13 @@ def fetch_stock_data(symbol: str, period: str = "6mo", interval: str = "1d") -> 
             ticker = f"{ticker}.NS"
 
         df = yf.download(ticker, period=period, interval=interval, progress=False, auto_adjust=False)
-        if df.empty or len(df) < 30:
+        if df.empty:
             return None
 
-        enriched = enrich_technical_indicators(df)
-        return enriched
+        df = enrich_technical_indicators(df)
+        if df is None or df.empty or len(df) < 30:
+            return None
+        return df
     except Exception as e:
         print(f"Error fetching data for {symbol}: {e}")
         return None

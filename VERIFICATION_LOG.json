@@ -356,5 +356,209 @@
       "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
     },
     "top_stocks": []
+  },
+  {
+    "timestamp": "2026-11-16 04:22 PM",
+    "capital_inr": 5000.0,
+    "gold": {
+      "symbol": "GOLDBEES",
+      "name": "Gold BeES (Pure Gold)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-16",
+      "current_price": 110.05999755859375,
+      "day_change_pct": -1.65,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -1.65% to \u20b9110.06. This is a healthy discount. Buy 13 units for your 1st step.",
+      "recommended_units": 13,
+      "total_cost": 1430.78,
+      "target_1": 114.46,
+      "target_2": 118.86,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "silver": {
+      "symbol": "SILVERBEES",
+      "name": "Silver BeES (Pure Silver)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-16",
+      "current_price": 160.61000061035156,
+      "day_change_pct": -4.83,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -4.83% to \u20b9160.61. This is a healthy discount. Buy 9 units for your 1st step.",
+      "recommended_units": 9,
+      "total_cost": 1445.49,
+      "target_1": 167.03,
+      "target_2": 173.46,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "top_stocks": [
+      {
+        "symbol": "ITC.NS",
+        "entry_price": 295.1000061035156,
+        "stop_loss": 287.72,
+        "target_1": 309.86,
+        "target_2": 320.93,
+        "quantity": 13,
+        "max_risk_rupees": 95.94,
+        "status": "PENDING_VERIFICATION"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-11-17 04:03 PM",
+    "capital_inr": 5000.0,
+    "gold": {
+      "symbol": "GOLDBEES",
+      "name": "Gold BeES (Pure Gold)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-17",
+      "current_price": 109.91999816894531,
+      "day_change_pct": -0.13,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -0.13% to \u20b9109.92. This is a healthy discount. Buy 13 units for your 1st step.",
+      "recommended_units": 13,
+      "total_cost": 1428.96,
+      "target_1": 114.32,
+      "target_2": 118.71,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "silver": {
+      "symbol": "SILVERBEES",
+      "name": "Silver BeES (Pure Silver)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-17",
+      "current_price": 160.75,
+      "day_change_pct": 0.09,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped 0.09% to \u20b9160.75. This is a healthy discount. Buy 9 units for your 1st step.",
+      "recommended_units": 9,
+      "total_cost": 1446.75,
+      "target_1": 167.18,
+      "target_2": 173.61,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "top_stocks": [
+      {
+        "symbol": "CANBK.NS",
+        "entry_price": 134.0,
+        "stop_loss": 130.65,
+        "target_1": 140.7,
+        "target_2": 145.72,
+        "quantity": 29,
+        "max_risk_rupees": 97.15,
+        "status": "PENDING_VERIFICATION"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-11-21 12:41 PM",
+    "capital_inr": 5000.0,
+    "gold": {
+      "symbol": "GOLDBEES",
+      "name": "Gold BeES (Pure Gold)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-19",
+      "current_price": 106.30000305175781,
+      "day_change_pct": -1.44,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -1.44% to \u20b9106.30. This is a healthy discount. Buy 14 units for your 1st step.",
+      "recommended_units": 14,
+      "total_cost": 1488.2,
+      "target_1": 110.55,
+      "target_2": 114.8,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "silver": {
+      "symbol": "SILVERBEES",
+      "name": "Silver BeES (Pure Silver)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-19",
+      "current_price": 152.80999755859375,
+      "day_change_pct": -1.89,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -1.89% to \u20b9152.81. This is a healthy discount. Buy 9 units for your 1st step.",
+      "recommended_units": 9,
+      "total_cost": 1375.29,
+      "target_1": 158.92,
+      "target_2": 165.03,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "top_stocks": [
+      {
+        "symbol": "POWERGRID.NS",
+        "entry_price": 269.0,
+        "stop_loss": 262.27,
+        "target_1": 282.46,
+        "target_2": 292.56,
+        "quantity": 14,
+        "max_risk_rupees": 94.22,
+        "status": "PENDING_VERIFICATION"
+      },
+      {
+        "symbol": "EXIDEIND.NS",
+        "entry_price": 408.54998779296875,
+        "stop_loss": 398.34,
+        "target_1": 428.97,
+        "target_2": 444.28,
+        "quantity": 9,
+        "max_risk_rupees": 91.89,
+        "status": "PENDING_VERIFICATION"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-11-21 12:45 PM",
+    "capital_inr": 5000.0,
+    "gold": {
+      "symbol": "GOLDBEES",
+      "name": "Gold BeES (Pure Gold)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-19",
+      "current_price": 106.30000305175781,
+      "day_change_pct": -1.44,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -1.44% to \u20b9106.30. This is a healthy discount. Buy 14 units for your 1st step.",
+      "recommended_units": 14,
+      "total_cost": 1488.2,
+      "target_1": 110.55,
+      "target_2": 114.8,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "silver": {
+      "symbol": "SILVERBEES",
+      "name": "Silver BeES (Pure Silver)",
+      "type": "COMMODITY_ETF",
+      "date": "2026-11-19",
+      "current_price": 152.80999755859375,
+      "day_change_pct": -1.89,
+      "status": "\ud83d\udfe2 GOOD BUY-THE-DIP ZONE",
+      "advice": "Price dropped -1.89% to \u20b9152.81. This is a healthy discount. Buy 9 units for your 1st step.",
+      "recommended_units": 9,
+      "total_cost": 1375.29,
+      "target_1": 158.92,
+      "target_2": 165.03,
+      "safety_rule": "Gold/Silver never expires. Hold patiently on Groww Delivery; no panic selling."
+    },
+    "top_stocks": [
+      {
+        "symbol": "POWERGRID.NS",
+        "entry_price": 269.0,
+        "stop_loss": 262.27,
+        "target_1": 282.46,
+        "target_2": 292.56,
+        "quantity": 14,
+        "max_risk_rupees": 94.22,
+        "status": "PENDING_VERIFICATION"
+      },
+      {
+        "symbol": "EXIDEIND.NS",
+        "entry_price": 408.54998779296875,
+        "stop_loss": 398.34,
+        "target_1": 428.97,
+        "target_2": 444.28,
+        "quantity": 9,
+        "max_risk_rupees": 91.89,
+        "status": "PENDING_VERIFICATION"
+      }
+    ]
   }
 ]

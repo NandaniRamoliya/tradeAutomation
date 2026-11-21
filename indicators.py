@@ -87,7 +87,11 @@ def enrich_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     Volume SMA, and Breakout markers.
     """
     df = flatten_yfinance_columns(df)
-    if len(df) < 50:
+    # Drop empty or NaN rows so latest row is always a valid trading bar
+    if "Close" in df.columns:
+        df = df.dropna(subset=["Close"])
+        df = df[df["Close"] > 0]
+    if len(df) < 30:
         return df
 
     # EMAs

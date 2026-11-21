@@ -2,9 +2,13 @@
 .env
 user_preferences.json
 task_output.log
+bot.pid
+schedule_state.json
 *.env
 user_preferences.json
 task_output.log
+bot.pid
+schedule_state.json
 .venv/
 __pycache__/
 *.pyc
@@ -26,6 +30,8 @@ __pycache__/
 *.env
 user_preferences.json
 task_output.log
+bot.pid
+schedule_state.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

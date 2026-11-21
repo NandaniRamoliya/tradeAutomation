@@ -25,18 +25,31 @@ def analyze_commodity_dip(symbol: str, name: str, budget_inr: float = 1500.0) ->
     if df is None or len(df) < 30:
         return {}
 
+    # Ensure no NaN rows
+    df = df.dropna(subset=["Close"])
+    if len(df) < 2:
+        return {}
+
     latest = df.iloc[-1]
     prev = df.iloc[-2]
 
-    close = float(latest["Close"])
-    prev_close = float(prev["Close"])
+    try:
+        close = float(latest["Close"])
+        prev_close = float(prev["Close"])
+    except Exception:
+        return {}
+
+    import math
+    if math.isnan(close) or close <= 0 or math.isnan(prev_close) or prev_close <= 0:
+        return {}
+
     day_change_pct = round(((close - prev_close) / prev_close) * 100, 2)
     rsi = float(latest.get("RSI", 50.0))
     ema_21 = float(latest.get("EMA_21", close))
     ema_50 = float(latest.get("EMA_50", close))
 
     # Units you can buy with a ₹1,500 budget (30% of ₹5,000 wallet)
-    recommended_units = int(budget_inr // close)
+    recommended_units = max(1, int(budget_inr // close))
     total_cost = round(recommended_units * close, 2)
 
     # Is it dipping?

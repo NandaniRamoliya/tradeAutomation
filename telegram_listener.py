@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import time
 import threading
 from datetime import datetime
@@ -17,6 +18,47 @@ import user_preferences
 import daily_tracker
 
 LOG_FILE = Path(__file__).resolve().parent / "bot.log"
+SCHEDULE_STATE_FILE = Path(__file__).resolve().parent / "schedule_state.json"
+PID_FILE = Path(__file__).resolve().parent / "bot.pid"
+
+
+def load_schedule_state() -> Dict[str, str]:
+    """Loads date records for sent morning/evening updates."""
+    if SCHEDULE_STATE_FILE.exists():
+        try:
+            with open(SCHEDULE_STATE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def save_schedule_state(state: Dict[str, str]):
+    """Persists date records to ensure updates are never missed or duplicated."""
+    try:
+        with open(SCHEDULE_STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+    except Exception as e:
+        log_event(f"Error saving schedule state: {e}")
+
+
+def enforce_single_instance():
+    """Ensures only a single bot process is running, terminating any stale instances."""
+    current_pid = os.getpid()
+    if PID_FILE.exists():
+        try:
+            with open(PID_FILE, "r") as f:
+                old_pid = int(f.read().strip())
+            if old_pid != current_pid:
+                import subprocess
+                subprocess.run(["taskkill", "/F", "/PID", str(old_pid)], capture_output=True)
+        except Exception:
+            pass
+    try:
+        with open(PID_FILE, "w") as f:
+            f.write(str(current_pid))
+    except Exception:
+        pass
 
 # On Windows pythonw.exe, sys.stdout and sys.stderr are None.
 # If print() is called without a valid stdout handle, pythonw terminates.
@@ -156,41 +198,42 @@ def format_interactive_stock_analysis(query: str, capital_inr: float = 5000.0, l
 
 def background_daily_scheduler():
     """
-    Autonomous background thread that checks time every 30 seconds.
-    Triggers market predictions report at:
-      - 09:00 AM (Monday - Friday)
-      - 04:00 PM (Monday - Friday)
+    Autonomous, state-aware background scheduler.
+    Triggers market predictions report for weekdays (Monday - Friday):
+      - Morning Scan: 9:00 AM to 3:30 PM (if not yet delivered today)
+      - Evening Scan: 4:00 PM onwards (if not yet delivered today)
     Skips weekends (Saturday & Sunday).
+    If the laptop was asleep at 9:00 AM or 4:00 PM, it automatically catches up
+    and sends the report immediately upon wake!
     """
-    log_event("Autonomous TradeShield Schedule Monitor started (9:00 AM & 4:00 PM Weekdays)")
-    last_triggered_slot = ""
+    log_event("Resilient TradeShield Schedule Monitor started (Catch-Up Aware 9 AM & 4 PM Weekdays)")
 
     while True:
         try:
             now = datetime.now()
-            weekday = now.weekday()  # 0=Monday, 4=Friday
-            current_date_str = now.strftime("%Y-%m-%d")
-            hour = now.hour
-            minute = now.minute
+            weekday = now.weekday()  # 0=Monday, 4=Friday, 5=Sat, 6=Sun
+            today_str = now.strftime("%Y-%m-%d")
 
             if weekday < 5:  # Monday to Friday only
-                # Morning Slot (9:00 AM - 9:05 AM window)
-                if hour == 9 and 0 <= minute <= 5:
-                    slot_key = f"{current_date_str}_0900"
-                    if slot_key != last_triggered_slot:
-                        log_event("Triggering 9:00 AM Morning Market Scan & Dispatch...")
-                        last_triggered_slot = slot_key
-                        daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
-                        log_event("9:00 AM Morning Market Update successfully dispatched!")
+                state = load_schedule_state()
 
-                # Evening Slot (16:00 / 4:00 PM - 16:05 window)
-                elif hour == 16 and 0 <= minute <= 5:
-                    slot_key = f"{current_date_str}_1600"
-                    if slot_key != last_triggered_slot:
-                        log_event("Triggering 4:00 PM Market Close Scan & Dispatch...")
-                        last_triggered_slot = slot_key
+                # Morning slot: from 09:00 AM up to 15:30 (3:30 PM market hours)
+                if (now.hour > 9 or (now.hour == 9 and now.minute >= 0)) and (now.hour < 15 or (now.hour == 15 and now.minute <= 30)):
+                    if state.get("last_morning_date") != today_str:
+                        log_event(f"🔔 Generating 9:00 AM Morning Market Scan & Dispatch for {today_str}...")
+                        state["last_morning_date"] = today_str
+                        save_schedule_state(state)
                         daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
-                        log_event("4:00 PM Market Update successfully dispatched!")
+                        log_event(f"✅ 9:00 AM Morning Market Update successfully dispatched for {today_str}!")
+
+                # Evening slot: from 16:00 (4:00 PM) onwards
+                elif now.hour >= 16:
+                    if state.get("last_evening_date") != today_str:
+                        log_event(f"🔔 Generating 4:00 PM Market Close Scan & Dispatch for {today_str}...")
+                        state["last_evening_date"] = today_str
+                        save_schedule_state(state)
+                        daily_tracker.generate_daily_prediction_report(capital_inr=config.DEFAULT_CAPITAL_INR)
+                        log_event(f"✅ 4:00 PM Market Update successfully dispatched for {today_str}!")
 
         except Exception as e:
             log_event(f"Schedule monitor error: {e}")
@@ -203,6 +246,8 @@ def run_telegram_bot_listener():
     Main loop listening for messages and inline button clicks on Telegram.
     Provides instant multilingual stock analysis and language configuration.
     """
+    enforce_single_instance()
+
     token = config.TELEGRAM_BOT_TOKEN
     if not token:
         log_event("ERROR: Telegram bot token not configured in .env!")
